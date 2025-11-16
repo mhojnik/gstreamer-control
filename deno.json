@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "dev": "deno run --watch main.ts",
+    "switcher": "deno run --allow-net --allow-env switcher.ts",
+    "overlay": "deno run --allow-net --allow-env overlay.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}
