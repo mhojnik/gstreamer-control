@@ -1,13 +1,13 @@
-#!/usr/bin/env -S deno run --allow-net --allow-env
+#!/usr/bin/env -S deno run --allow-net --allow-env --allow-read --env-file
 /**
  * Overlay Manager - Control HTML overlay visibility and URL
  *
- * Environment Variables:
- *    BASE_URL           Base URL of the pipeline service (default: https://nw4ckks004cw4kwwskwck40k.sljeme360.apsiscloud.com)
- *    DEFAULT_OVERLAY_URL Default overlay URL (default: https://sljeme360-overlay.widecast.workers.dev/)
+ * Environment Variables (can be set via .env file or environment):
+ *    BASE_URL           Base URL of the pipeline service
+ *    DEFAULT_OVERLAY_URL Default overlay URL
  *
  * Usage:
- *    deno run --allow-net --allow-env overlay.ts [command] [base_url]
+ *    deno run --allow-net --allow-env --allow-read --env-file overlay.ts [command] [base_url]
  *
  * Commands:
  *    status              Show current overlay status
@@ -17,12 +17,12 @@
  *    refresh             Force reload current URL (clears cache)
  *
  * Examples:
- *    deno run --allow-net --allow-env overlay.ts status
- *    deno run --allow-net --allow-env overlay.ts enable http://localhost:5000
- *    BASE_URL=http://localhost:5000 deno run --allow-net --allow-env overlay.ts status
- *    deno run --allow-net --allow-env overlay.ts disable
- *    deno run --allow-net --allow-env overlay.ts set-url https://sljeme360-overlay.widecast.workers.dev/
- *    deno run --allow-net --allow-env overlay.ts refresh
+ *    deno run --allow-net --allow-env --allow-read --env-file overlay.ts status
+ *    deno run --allow-net --allow-env --allow-read --env-file overlay.ts enable http://localhost:5000
+ *    BASE_URL=http://localhost:5000 deno run --allow-net --allow-env --allow-read --env-file overlay.ts status
+ *    deno run --allow-net --allow-env --allow-read --env-file overlay.ts disable
+ *    deno run --allow-net --allow-env --allow-read --env-file overlay.ts set-url https://sljeme360-overlay.widecast.workers.dev/
+ *    deno run --allow-net --allow-env --allow-read --env-file overlay.ts refresh
  */
 
 interface OverlayStatus {
@@ -33,6 +33,7 @@ interface OverlayStatus {
 }
 
 // Configuration - read from environment variables with fallbacks
+// Note: .env file is automatically loaded via --env-file flag
 const DEFAULT_BASE_URL = Deno.env.get("BASE_URL");
 
 async function getOverlayStatus(baseUrl: string): Promise<OverlayStatus | null> {

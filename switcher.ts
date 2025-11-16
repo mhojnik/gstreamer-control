@@ -1,20 +1,20 @@
-#!/usr/bin/env -S deno run --allow-net --allow-env
+#!/usr/bin/env -S deno run --allow-net --allow-env --allow-read --env-file
 /**
  * Source Switcher - Rotates between all available sources every 2 minutes
  * Optionally plays sljeme_zicara.mp4 video after N SRT source switches (configurable via SWITCHES_BEFORE_VIDEO)
  *
- * Environment Variables:
- *    BASE_URL                  Base URL of the pipeline service (default: https://nw4ckks004cw4kwwskwck40k.sljeme360.apsiscloud.com)
+ * Environment Variables (can be set via .env file or environment):
+ *    BASE_URL                  Base URL of the pipeline service
  *    SWITCH_INTERVAL_SECONDS   Seconds between source switches (default: 120)
  *    VIDEO_FILE                Video file path to play (default: sljeme_zicara.mp4)
  *    SWITCHES_BEFORE_VIDEO     Number of SRT switches before playing video, 0 to disable (default: 0)
  *
  * Usage:
- *    deno run --allow-net --allow-env switcher.ts [base_url]
+ *    deno run --allow-net --allow-env --allow-read --env-file switcher.ts [base_url]
  *
  * Example:
- *    deno run --allow-net --allow-env switcher.ts http://localhost:5000
- *    BASE_URL=http://localhost:5000 SWITCH_INTERVAL_SECONDS=60 deno run --allow-net --allow-env switcher.ts
+ *    deno run --allow-net --allow-env --allow-read --env-file switcher.ts http://localhost:5000
+ *    BASE_URL=http://localhost:5000 SWITCH_INTERVAL_SECONDS=60 deno run --allow-net --allow-env --allow-read --env-file switcher.ts
  */
 
 interface Source {
@@ -36,6 +36,7 @@ interface SourceResponse {
 }
 
 // Configuration - read from environment variables with fallbacks
+// Note: .env file is automatically loaded via --env-file flag
 const BASE_URL = Deno.args[0] || 
   Deno.env.get("BASE_URL");
 const SWITCH_INTERVAL_SECONDS = parseInt(
