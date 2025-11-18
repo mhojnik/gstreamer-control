@@ -8,6 +8,9 @@
  *    SWITCH_INTERVAL_SECONDS   Seconds between source switches (default: 120)
  *    VIDEO_FILE                Video file path to play (default: sljeme_zicara.mp4)
  *    SWITCHES_BEFORE_VIDEO     Number of SRT switches before playing video, 0 to disable (default: 0)
+ *    CAMERA_API_HOST           Camera API host URL (default: http://localhost:3000)
+ *    CAMERA_API_TOKEN          Bearer token for camera API authentication (required if CAMERA_API_HOST is set)
+ *    SOURCE_DIRECTION_MAP      Comma-separated mapping of source IDs to directions (e.g., "1:N,2:E,3:W,4:S")
  *
  * Usage:
  *    deno run --allow-net --allow-env --allow-read --env-file switcher.ts [base_url]
@@ -48,6 +51,28 @@ const SWITCHES_BEFORE_VIDEO = parseInt(
   Deno.env.get("SWITCHES_BEFORE_VIDEO") || "0",
   10
 ); // Set to 0 to disable video playback, or set to N to play video after every N SRT switches
+const CAMERA_API_HOST = Deno.env.get("CAMERA_API_HOST") || "http://localhost:3000";
+const CAMERA_API_TOKEN = Deno.env.get("CAMERA_API_TOKEN");
+
+// Parse source-to-direction mapping from environment variable
+// Format: "1:N,2:E,3:W,4:S" or similar
+function parseSourceDirectionMap(): Map<number, string> {
+  const map = new Map<number, string>();
+  const mapStr = Deno.env.get("SOURCE_DIRECTION_MAP");
+  if (mapStr) {
+    const pairs = mapStr.split(",");
+    for (const pair of pairs) {
+      const [sourceId, direction] = pair.split(":").map((s) => s.trim());
+      const id = parseInt(sourceId, 10);
+      if (!isNaN(id) && ["N", "E", "W", "S"].includes(direction.toUpperCase())) {
+        map.set(id, direction.toUpperCase());
+      }
+    }
+  }
+  return map;
+}
+
+const SOURCE_DIRECTION_MAP = parseSourceDirectionMap();
 
 function sleep(seconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
@@ -110,6 +135,42 @@ function findVideoSource(sources: Source[], filePath: string): Source | null {
   ) || null;
 }
 
+async function notifyCameraAPI(sourceId: number): Promise<void> {
+  /** Notify camera API about source switch with direction */
+  if (!CAMERA_API_TOKEN) {
+    // Silently skip if token is not configured
+    return;
+  }
+
+  const direction = SOURCE_DIRECTION_MAP.get(sourceId);
+  if (!direction) {
+    // No mapping found for this source, skip API call
+    return;
+  }
+
+  try {
+    const response = await fetch(`${CAMERA_API_HOST}/api/camera`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${CAMERA_API_TOKEN}`,
+      },
+      body: JSON.stringify({ direction }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.ok) {
+      console.log(`   📡 Camera API notified: direction=${direction}`);
+    } else {
+      const text = await response.text();
+      console.error(
+        `   ⚠️  Camera API notification failed: ${response.status} - ${text}`
+      );
+    }
+  } catch (error) {
+    console.error(`   ⚠️  Camera API notification error: ${error}`);
+  }
+}
+
 async function switchToSource(sourceId: number, sourceName: string): Promise<boolean> {
   /** Switch to a specific source */
   try {
@@ -124,6 +185,10 @@ async function switchToSource(sourceId: number, sourceName: string): Promise<boo
     if (response.ok) {
       const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19);
       console.log(`[${timestamp}] ✅ Switched to source ${sourceId}: ${sourceName}`);
+      
+      // Notify camera API after successful switch
+      await notifyCameraAPI(sourceId);
+      
       return true;
     } else {
       const text = await response.text();
@@ -189,11 +254,19 @@ async function main(): Promise<void> {
   );
   if (SWITCHES_BEFORE_VIDEO > 0) {
     console.log(
-      `Video playback: After every ${SWITCHES_BEFORE_VIDEO} SRT source switches\n`
+      `Video playback: After every ${SWITCHES_BEFORE_VIDEO} SRT source switches`
     );
   } else {
-    console.log(`Video playback: Disabled\n`);
+    console.log(`Video playback: Disabled`);
   }
+  if (CAMERA_API_TOKEN && SOURCE_DIRECTION_MAP.size > 0) {
+    console.log(`Camera API: Enabled (${SOURCE_DIRECTION_MAP.size} source(s) mapped)`);
+  } else if (CAMERA_API_TOKEN) {
+    console.log(`Camera API: Token configured but no source mappings found`);
+  } else {
+    console.log(`Camera API: Disabled (no token configured)`);
+  }
+  console.log();
 
   // Initial health check
   try {
@@ -231,7 +304,7 @@ async function main(): Promise<void> {
   }
 
   // Check if video source exists, if not try to add it
-  let videoSource = findVideoSource(sources, VIDEO_FILE);
+  const videoSource = findVideoSource(sources, VIDEO_FILE);
   let videoSourceId: number | null = null;
 
   if (videoSource) {
