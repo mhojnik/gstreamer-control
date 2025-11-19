@@ -75,6 +75,10 @@ async function handleAPIRequest(request: Request): Promise<Response> {
 			
 			if (body.rotationEnabled !== undefined) {
 				state.rotationEnabled = body.rotationEnabled;
+				// Clear fixedSourceId when rotation is enabled
+				if (state.rotationEnabled) {
+					state.fixedSourceId = null;
+				}
 			}
 			if (body.fixedSourceId !== undefined) {
 				state.fixedSourceId = body.fixedSourceId;

@@ -89,6 +89,12 @@ async function processRotation(
 		return;
 	}
 
+	// Rotation is enabled - ensure fixedSourceId is cleared
+	if (state.fixedSourceId !== null) {
+		state.fixedSourceId = null;
+		await saveState(false);
+	}
+
 	// Rotation is enabled - follow schedule
 	if (state.rotationSchedule.length === 0) {
 		// No schedule defined - wait for state change events
