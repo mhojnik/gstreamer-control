@@ -1,0 +1,21 @@
+{
+  "rotationEnabled": false,
+  "fixedSourceId": 4,
+  "selectedCameraIds": [
+    1,
+    2
+  ],
+  "rotationSchedule": [
+    {
+      "cameraId": 1,
+      "durationSeconds": 30
+    },
+    {
+      "cameraId": 2,
+      "durationSeconds": 60
+    }
+  ],
+  "currentSourceId": 4,
+  "lastSwitchTime": "2025-11-19T15:30:14.195Z",
+  "currentScheduleIndex": null
+}

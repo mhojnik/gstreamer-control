@@ -1,9 +1,11 @@
 {
   "tasks": {
     "dev": "deno run --watch main.ts",
-    "start": "deno run --allow-net --allow-env --allow-read switcher.ts",
-    "switcher": "deno run --allow-net --allow-env --allow-read --env-file .env switcher.ts",
-    "overlay": "deno run --allow-net --allow-env --allow-read --env-file .env overlay.ts"
+    "start": "deno run --allow-env --allow-net --allow-read --allow-write switcher.ts",
+    "dev-switcher": "deno run --watch-hmr --allow-env --allow-net --allow-read --allow-write --env-file switcher.ts",
+    "dev-overlay": "deno run --watch-hmr --allow-env --allow-net --allow-read --env-file overlay.ts",
+    "test": "deno test --allow-read --allow-write",
+    "test:watch": "deno test --watch --allow-read --allow-write"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1"
