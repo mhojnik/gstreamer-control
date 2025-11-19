@@ -33,3 +33,5 @@ tmp/
 temp/
 *.tmp
 
+# Data files (state persistence)
+data/
